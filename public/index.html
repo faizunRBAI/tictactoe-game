@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tic Tac Toe</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #eee;
+    }
+
+    h1 {
+      font-size: 2.8rem;
+      letter-spacing: 4px;
+      margin-bottom: 0.4rem;
+      background: linear-gradient(90deg, #e94560, #0f3460);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      font-size: 0.9rem;
+      color: #aaa;
+      margin-bottom: 1.8rem;
+      letter-spacing: 1px;
+    }
+
+    .scoreboard {
+      display: flex;
+      gap: 2rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .score-card {
+      text-align: center;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 0.6rem 1.4rem;
+      min-width: 80px;
+    }
+
+    .score-card .label {
+      font-size: 0.75rem;
+      color: #aaa;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .score-card .value {
+      font-size: 1.8rem;
+      font-weight: 700;
+    }
+
+    .score-card.x .value  { color: #e94560; }
+    .score-card.tie .value { color: #f5a623; }
+    .score-card.o .value  { color: #4fc3f7; }
+
+    .status {
+      font-size: 1.1rem;
+      margin-bottom: 1.2rem;
+      min-height: 1.6rem;
+      letter-spacing: 1px;
+      transition: color 0.3s;
+    }
+
+    .status.x    { color: #e94560; }
+    .status.o    { color: #4fc3f7; }
+    .status.draw { color: #f5a623; }
+    .status.win  { color: #76ff03; font-weight: 700; font-size: 1.3rem; }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 110px);
+      grid-template-rows: repeat(3, 110px);
+      gap: 10px;
+    }
+
+    .cell {
+      background: rgba(255,255,255,0.06);
+      border: 2px solid rgba(255,255,255,0.12);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      font-weight: 900;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s, border-color 0.2s;
+      user-select: none;
+    }
+
+    .cell:hover:not(.taken) {
+      background: rgba(255,255,255,0.12);
+      border-color: rgba(255,255,255,0.3);
+      transform: scale(1.04);
+    }
+
+    .cell.x { color: #e94560; }
+    .cell.o { color: #4fc3f7; }
+
+    .cell.winning {
+      background: rgba(118,255,3,0.15);
+      border-color: #76ff03;
+      animation: pulse 0.6s ease-in-out infinite alternate;
+    }
+
+    @keyframes pulse {
+      from { transform: scale(1); }
+      to   { transform: scale(1.06); }
+    }
+
+    .cell.taken { cursor: default; }
+
+    .controls {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1.6rem;
+    }
+
+    button {
+      padding: 0.6rem 1.6rem;
+      border: none;
+      border-radius: 30px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: 0.5px;
+      transition: transform 0.1s, opacity 0.2s;
+    }
+
+    button:hover { opacity: 0.85; transform: scale(1.04); }
+    button:active { transform: scale(0.97); }
+
+    .btn-restart {
+      background: linear-gradient(135deg, #e94560, #c62a47);
+      color: #fff;
+    }
+
+    .btn-reset {
+      background: rgba(255,255,255,0.1);
+      color: #ccc;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    .mode-selector {
+      display: flex;
+      gap: 0.6rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .mode-btn {
+      padding: 0.4rem 1.1rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.06);
+      color: #ccc;
+      transition: all 0.2s;
+    }
+
+    .mode-btn.active {
+      background: linear-gradient(135deg, #e94560, #c62a47);
+      color: #fff;
+      border-color: transparent;
+    }
+
+    footer {
+      margin-top: 2.5rem;
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.3);
+      letter-spacing: 1px;
+    }
+  </style>
+</head>
+<body>
+  <h1>TIC TAC TOE</h1>
+  <p class="subtitle">Classic Strategy Game</p>
+
+  <div class="mode-selector">
+    <button class="mode-btn active" id="btn2p">2 Players</button>
+    <button class="mode-btn" id="btnAI">vs Computer</button>
+  </div>
+
+  <div class="scoreboard">
+    <div class="score-card x">
+      <div class="label" id="labelX">Player X</div>
+      <div class="value" id="scoreX">0</div>
+    </div>
+    <div class="score-card tie">
+      <div class="label">Draws</div>
+      <div class="value" id="scoreTie">0</div>
+    </div>
+    <div class="score-card o">
+      <div class="label" id="labelO">Player O</div>
+      <div class="value" id="scoreO">0</div>
+    </div>
+  </div>
+
+  <div class="status" id="status">Player X's turn</div>
+
+  <div class="board" id="board">
+    <div class="cell" data-index="0"></div>
+    <div class="cell" data-index="1"></div>
+    <div class="cell" data-index="2"></div>
+    <div class="cell" data-index="3"></div>
+    <div class="cell" data-index="4"></div>
+    <div class="cell" data-index="5"></div>
+    <div class="cell" data-index="6"></div>
+    <div class="cell" data-index="7"></div>
+    <div class="cell" data-index="8"></div>
+  </div>
+
+  <div class="controls">
+    <button class="btn-restart" id="btnRestart">New Game</button>
+    <button class="btn-reset" id="btnReset">Reset Score</button>
+  </div>
+
+  <footer>Deployed on AWS &bull; Tic Tac Toe &copy; 2024</footer>
+
+  <script>
+    const WINS = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+
+    let board, current, gameOver, scores, vsAI;
+
+    function init() {
+      board    = Array(9).fill(null);
+      current  = 'X';
+      gameOver = false;
+      document.querySelectorAll('.cell').forEach(c => {
+        c.textContent = '';
+        c.className   = 'cell';
+      });
+      setStatus(`Player ${current}'s turn`, current.toLowerCase());
+    }
+
+    function initScores() {
+      scores = { X: 0, O: 0, tie: 0 };
+      updateScoreDisplay();
+    }
+
+    function setMode(ai) {
+      vsAI = ai;
+      document.getElementById('btn2p').classList.toggle('active', !ai);
+      document.getElementById('btnAI').classList.toggle('active',  ai);
+      document.getElementById('labelO').textContent = ai ? 'Computer' : 'Player O';
+      init();
+    }
+
+    function setStatus(msg, cls) {
+      const el = document.getElementById('status');
+      el.textContent = msg;
+      el.className   = 'status ' + (cls || '');
+    }
+
+    function updateScoreDisplay() {
+      document.getElementById('scoreX').textContent   = scores.X;
+      document.getElementById('scoreO').textContent   = scores.O;
+      document.getElementById('scoreTie').textContent = scores.tie;
+    }
+
+    function checkWin(b, player) {
+      return WINS.find(combo => combo.every(i => b[i] === player)) || null;
+    }
+
+    function highlightWin(combo) {
+      combo.forEach(i => {
+        document.querySelector(`.cell[data-index="${i}"]`).classList.add('winning');
+      });
+    }
+
+    function handleClick(e) {
+      const cell  = e.currentTarget;
+      const index = Number(cell.dataset.index);
+      if (gameOver || board[index]) return;
+      playMove(index, current);
+    }
+
+    function playMove(index, player) {
+      board[index] = player;
+      const cell   = document.querySelector(`.cell[data-index="${index}"]`);
+      cell.textContent = player;
+      cell.classList.add(player.toLowerCase(), 'taken');
+
+      const winCombo = checkWin(board, player);
+      if (winCombo) {
+        gameOver = true;
+        scores[player]++;
+        updateScoreDisplay();
+        highlightWin(winCombo);
+        const who = vsAI && player === 'O' ? 'Computer' : `Player ${player}`;
+        setStatus(`🎉 ${who} wins!`, 'win');
+        return;
+      }
+      if (board.every(Boolean)) {
+        gameOver = true;
+        scores.tie++;
+        updateScoreDisplay();
+        setStatus("It's a draw!", 'draw');
+        return;
+      }
+      current = current === 'X' ? 'O' : 'X';
+      if (vsAI && current === 'O') {
+        setStatus("Computer is thinking…", 'o');
+        setTimeout(aiMove, 400);
+      } else {
+        const who = vsAI ? 'Your' : `Player ${current}'s`;
+        setStatus(`${who} turn`, current.toLowerCase());
+      }
+    }
+
+    /* ---- Minimax AI ---- */
+    function aiMove() {
+      const idx = bestMove(board);
+      playMove(idx, 'O');
+    }
+
+    function minimax(b, isMax) {
+      const w = checkWin(b, 'O');
+      if (w) return 10;
+      if (checkWin(b, 'X')) return -10;
+      if (b.every(Boolean)) return 0;
+      let best = isMax ? -Infinity : Infinity;
+      for (let i = 0; i < 9; i++) {
+        if (b[i]) continue;
+        b[i] = isMax ? 'O' : 'X';
+        const score = minimax(b, !isMax);
+        b[i] = null;
+        best = isMax ? Math.max(best, score) : Math.min(best, score);
+      }
+      return best;
+    }
+
+    function bestMove(b) {
+      let best = -Infinity, move = -1;
+      for (let i = 0; i < 9; i++) {
+        if (b[i]) continue;
+        b[i] = 'O';
+        const s = minimax(b, false);
+        b[i] = null;
+        if (s > best) { best = s; move = i; }
+      }
+      return move;
+    }
+
+    /* ---- bootstrap ---- */
+    vsAI = false;
+    initScores();
+    init();
+
+    document.querySelectorAll('.cell').forEach(c => c.addEventListener('click', handleClick));
+    document.getElementById('btnRestart').addEventListener('click', init);
+    document.getElementById('btnReset').addEventListener('click', () => { initScores(); init(); });
+    document.getElementById('btn2p').addEventListener('click', () => setMode(false));
+    document.getElementById('btnAI').addEventListener('click', () => setMode(true));
+  </script>
+</body>
+</html>

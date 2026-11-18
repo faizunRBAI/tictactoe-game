@@ -1,0 +1,12 @@
+# opsagent:meta cloud=aws region=us-east-1 target=ec2
+
+user: User { opsagent-type: generic.user; shape: person }
+vpc: AWS VPC (us-east-1) {
+  ec2: EC2 Instance (t3.micro) { opsagent-type: aws.ec2 }
+  nginx: Nginx Reverse Proxy { icon: simple:nginx; opsagent-type: generic.app }
+  app: Tic Tac Toe App (Node.js) { opsagent-type: generic.app }
+}
+
+user -> vpc.nginx: HTTP :80
+vpc.nginx -> vpc.app: proxy :3000
+vpc.app -> vpc.ec2: runs on
