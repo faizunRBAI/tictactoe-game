@@ -31,7 +31,6 @@
           - curl
           - git
           - nginx
-          - rsync
         state: present
 
     # ── Node.js 20 via NodeSource ──────────────────────────────────────────────
@@ -70,8 +69,8 @@
       ansible.builtin.file:
         path: "{{ app_dir }}"
         state: directory
-        owner: appuser
-        group: appuser
+        owner: root
+        group: root
         mode: "0755"
 
     # ── Deploy application code ────────────────────────────────────────────────
@@ -79,21 +78,28 @@
       ansible.builtin.copy:
         src: "{{ item.src }}"
         dest: "{{ app_dir }}/{{ item.dest }}"
-        owner: appuser
-        group: appuser
+        owner: root
+        group: root
         mode: "0644"
       loop:
-        - { src: "../package.json",    dest: "package.json" }
-        - { src: "../server.js",       dest: "server.js" }
-        - { src: "../src/",            dest: "src/" }
-        - { src: "../public/",         dest: "public/" }
+        - { src: "../package.json", dest: "package.json" }
+        - { src: "../server.js",    dest: "server.js" }
+        - { src: "../src/",         dest: "src/" }
+        - { src: "../public/",      dest: "public/" }
 
     - name: Install Node.js dependencies
       ansible.builtin.command:
         cmd: npm install --omit=dev
         chdir: "{{ app_dir }}"
-      become_user: appuser
       changed_when: true
+
+    - name: Set app directory ownership to appuser
+      ansible.builtin.file:
+        path: "{{ app_dir }}"
+        state: directory
+        owner: appuser
+        group: appuser
+        recurse: true
 
     # ── Systemd service ────────────────────────────────────────────────────────
     - name: Write systemd unit file
