@@ -13,7 +13,7 @@ stages:
         with:
           node-version: "20"
       - name: Install dependencies
-        run: npm ci
+        run: npm install
       - name: Lint
         run: npm run lint --if-present
 
@@ -27,7 +27,7 @@ stages:
         with:
           node-version: "20"
       - name: Install dependencies
-        run: npm ci
+        run: npm install
       - name: Test
         run: npm test --if-present
 
